@@ -84,6 +84,42 @@
 			
 		</form>
 	</div>
+	
+	<div id="container5">
+
+		<form id="form5" action="api/call/prc/test/tt.pkg_teste.prc_teste_refcursor_table" method="post">
+		
+			<label for="p_id">p_id: </label>
+			<input type="text" name="p_id" value="26" />
+			<br />
+			
+			<input type="submit" id="call" value="call" />
+			<br />
+			<br />
+			<br />
+			<br />
+			
+		</form>
+	</div>
+	
+	
+	<div id="container6">
+
+		<form id="form6" action="api/call/prc/test/tt.pkg_teste.fnc_teste_refcursor" method="post">
+		
+			<label for="p_id">p_id: </label>
+			<input type="text" name="p_id" value="27" />
+			<br />
+			
+			<input type="submit" id="call" value="call" />
+			<br />
+			<br />
+			<br />
+			<br />
+			
+		</form>
+	</div>
+	
 
 </body>
 </html>

@@ -142,20 +142,17 @@ public class StoredProcedureServiceImpl implements StoredProcedureService {
 				
 				final int j = ++i;
 				
-				String name = toUpperCaseNullable(rs.getString("COLUMN_NAME"));
+				String nameTmp = toUpperCaseNullable(rs.getString("COLUMN_NAME"));
 				short type = rs.getShort("COLUMN_TYPE");
 				int dataType = rs.getInt("DATA_TYPE");
 				String dataTypeName = rs.getString("TYPE_NAME");
 				
 				if(type == DatabaseMetaData.procedureColumnReturn) {
 					hasReturn.set(Boolean.TRUE);
-					actionsIn.add((cs) -> {
-						cs.registerOutParameter(j, dataType);
-					});
-					actionsOut.add((cs) -> {
-						result.put("return", getValue(cs, j, dataType));
-					});
+					nameTmp = "RETURN";
 				}
+				
+				String name = nameTmp;
 				
 				if(type == DatabaseMetaData.procedureColumnIn
 						|| type == DatabaseMetaData.procedureColumnInOut) {
@@ -173,7 +170,8 @@ public class StoredProcedureServiceImpl implements StoredProcedureService {
 				}
 				
 				if(type == DatabaseMetaData.procedureColumnInOut 
-						|| type == DatabaseMetaData.procedureColumnOut) {
+						|| type == DatabaseMetaData.procedureColumnOut
+						|| type == DatabaseMetaData.procedureColumnReturn) {
 					
 					if(name.startsWith(PARAM_SESSION)) {
 						actionsIn.add((cs) -> {
