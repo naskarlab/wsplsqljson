@@ -7,7 +7,6 @@ import java.util.Random;
 import javax.inject.Singleton;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.Consumes;
-import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -26,7 +25,7 @@ import com.naskar.pls.service.impl.SessionAttributesImpl;
 import com.naskar.pls.service.impl.StoredProcedureServiceImpl;
 
 @Singleton
-@Path("/call")
+@Path("/")
 public class RestStoredProcedure {
 	
 	private Logger logger;
@@ -42,15 +41,8 @@ public class RestStoredProcedure {
 		this.random = new Random(new Date().getTime());
 	}
 	
-	@GET
-    @Path("/ping")
-    @Produces(MediaType.TEXT_PLAIN)
-    public Response ping() {
-        return Response.ok().build();
-    }
-    
 	@POST
-    @Path("/prc/{ds}/{name}")
+    @Path("/{ds}/{name}")
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     @Produces(MediaType.APPLICATION_JSON)
     public Response prc(

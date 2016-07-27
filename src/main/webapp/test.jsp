@@ -7,7 +7,7 @@
 <body>
 	<div id="container">
 
-		<form id="form" action="api/call/prc/test/tt.pkg_teste.prc_teste" method="post">
+		<form id="form" action="api/test/tt.pkg_teste.prc_teste" method="post">
 		
 			<label for="p_id">p_id: </label>
 			<input type="text" name="p_id" value="21" />
@@ -36,7 +36,7 @@
 	
 	<div id="container2">
 
-		<form id="form2" action="api/call/prc/test/tt.pkg_teste.prc_teste2" method="post">
+		<form id="form2" action="api/test/tt.pkg_teste.prc_teste2" method="post">
 		
 			<label for="p_id">p_id: </label>
 			<input type="text" name="p_id" value="21" />
@@ -53,7 +53,7 @@
 	
 	<div id="container3">
 
-		<form id="form3" action="api/call/prc/test/tt.pkg_teste.prc_teste_session" method="post">
+		<form id="form3" action="api/test/tt.pkg_teste.prc_teste_session" method="post">
 		
 			<label for="p_id">p_id: </label>
 			<input type="text" name="p_id" value="22" />
@@ -70,7 +70,7 @@
 	
 	<div id="container4">
 
-		<form id="form4" action="api/call/prc/test/tt.pkg_teste.fnc_teste" method="post">
+		<form id="form4" action="api/test/tt.pkg_teste.fnc_teste" method="post">
 		
 			<label for="p_id">p_id: </label>
 			<input type="text" name="p_id" value="23" />
@@ -87,7 +87,7 @@
 	
 	<div id="container5">
 
-		<form id="form5" action="api/call/prc/test/tt.pkg_teste.prc_teste_refcursor_table" method="post">
+		<form id="form5" action="api/test/tt.pkg_teste.prc_teste_refcursor_table" method="post">
 		
 			<label for="p_id">p_id: </label>
 			<input type="text" name="p_id" value="26" />
@@ -105,7 +105,7 @@
 	
 	<div id="container6">
 
-		<form id="form6" action="api/call/prc/test/tt.pkg_teste.fnc_teste_refcursor" method="post">
+		<form id="form6" action="api/test/pkg_teste.fnc_teste_refcursor" method="post">
 		
 			<label for="p_id">p_id: </label>
 			<input type="text" name="p_id" value="27" />
