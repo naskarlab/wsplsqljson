@@ -21,6 +21,7 @@ import javax.ws.rs.core.MultivaluedMap;
 
 import org.apache.log4j.Logger;
 
+import com.naskar.pls.service.Holder;
 import com.naskar.pls.service.SessionAttributes;
 import com.naskar.pls.service.StoredProcedureService;
 
@@ -57,9 +58,10 @@ public class StoredProcedureServiceImpl implements StoredProcedureService {
 						
 			List<Action<CallableStatement>> actionsIn = new ArrayList<Action<CallableStatement>>();
 			List<Action<CallableStatement>> actionsOut = new ArrayList<Action<CallableStatement>>();
-
-			int size = createActions(conn, procedureName, params, session, result, actionsIn, actionsOut);
-			executeCallable(conn, procedureName, size, actionsIn, actionsOut);
+			Holder<Boolean> hasReturn = new Holder<Boolean>(false);
+			
+			int size = createActions(conn, procedureName, params, session, result, actionsIn, actionsOut, hasReturn);
+			executeCallable(conn, procedureName, size, actionsIn, actionsOut, hasReturn.get());
 			
 			conn.commit();
 		} catch(Exception e) {
@@ -88,13 +90,17 @@ public class StoredProcedureServiceImpl implements StoredProcedureService {
 		return result;
 	}
 
-	private void executeCallable(Connection conn, String procedureName, int size, List<Action<CallableStatement>> actionsIn,
-			List<Action<CallableStatement>> actionsOut) throws SQLException, Exception {
+	private void executeCallable(Connection conn, String procedureName, int size, 
+			List<Action<CallableStatement>> actionsIn,
+			List<Action<CallableStatement>> actionsOut,
+			boolean hasReturn
+			) throws SQLException, Exception {
 		CallableStatement cs = null;
 		
 		try {
+			int realSize = hasReturn ? size - 1: size;
 			cs = conn.prepareCall(
-				"{ call " + procedureName + createParameters(size) + " }");
+				"{ " + (hasReturn ? "? =" : "") + " call " + procedureName + createParameters(realSize) + " }");
 			
 			for(Action<CallableStatement> action : actionsIn) {
 				action.call(cs);
@@ -123,7 +129,8 @@ public class StoredProcedureServiceImpl implements StoredProcedureService {
 			final Map<String, Object> params, final SessionAttributes session, 
 			final Map<String, Object> result,
 			List<Action<CallableStatement>> actionsIn, 
-			List<Action<CallableStatement>> actionsOut)
+			List<Action<CallableStatement>> actionsOut,
+			Holder<Boolean> hasReturn)
 					throws SQLException {
 		
 		ResultSet rs = null;
@@ -135,12 +142,22 @@ public class StoredProcedureServiceImpl implements StoredProcedureService {
 				
 				final int j = ++i;
 				
-				String name = rs.getString("COLUMN_NAME").toUpperCase();
+				String name = toUpperCaseNullable(rs.getString("COLUMN_NAME"));
 				short type = rs.getShort("COLUMN_TYPE");
 				int dataType = rs.getInt("DATA_TYPE");
 				String dataTypeName = rs.getString("TYPE_NAME");
 				
-				if(type == DatabaseMetaData.procedureColumnIn 
+				if(type == DatabaseMetaData.procedureColumnReturn) {
+					hasReturn.set(Boolean.TRUE);
+					actionsIn.add((cs) -> {
+						cs.registerOutParameter(j, dataType);
+					});
+					actionsOut.add((cs) -> {
+						result.put("return", getValue(cs, j, dataType));
+					});
+				}
+				
+				if(type == DatabaseMetaData.procedureColumnIn
 						|| type == DatabaseMetaData.procedureColumnInOut) {
 					
 					if(name.startsWith(PARAM_SESSION)) {
@@ -201,6 +218,14 @@ public class StoredProcedureServiceImpl implements StoredProcedureService {
 				}
 			}
 		}
+	}
+	
+	private String toUpperCaseNullable(String v) {
+		String value = v;
+		if(value != null) {
+			value = value.toUpperCase();
+		}
+		return value;
 	}
 
 	private List<Map<String, Object>> getResultSet(CallableStatement cs, int j) throws SQLException {

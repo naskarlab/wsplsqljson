@@ -67,6 +67,23 @@
 			
 		</form>
 	</div>
+	
+	<div id="container4">
+
+		<form id="form4" action="api/call/prc/test/tt.pkg_teste.fnc_teste" method="post">
+		
+			<label for="p_id">p_id: </label>
+			<input type="text" name="p_id" value="23" />
+			<br />
+			
+			<input type="submit" id="call" value="call" />
+			<br />
+			<br />
+			<br />
+			<br />
+			
+		</form>
+	</div>
 
 </body>
 </html>
