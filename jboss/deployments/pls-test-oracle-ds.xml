@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<datasources>
+	<datasource jta="false" jndi-name="java:jboss/datasources/pls/test" pool-name="pls/test" enabled="true" use-ccm="false">
+		<connection-url>jdbc:oracle:thin:@192.168.32.137:1521:XE</connection-url>
+		<driver-class>oracle.jdbc.OracleDriver</driver-class>
+		<driver>ojdbc6.jar</driver>
+		<pool>
+			<min-pool-size>2</min-pool-size>
+			<max-pool-size>10</max-pool-size>
+		</pool>
+		<security>
+			<user-name>tt</user-name>
+			<password>tt</password>
+		</security>
+		<validation>
+			<validate-on-match>false</validate-on-match>
+			<background-validation>false</background-validation>
+		</validation>
+		<statement>
+			<share-prepared-statements>false</share-prepared-statements>
+		</statement>
+	</datasource>
+</datasources>

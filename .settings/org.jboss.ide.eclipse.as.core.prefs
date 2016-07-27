@@ -1,0 +1,2 @@
+eclipse.preferences.version=1
+org.jboss.ide.eclipse.as.core.singledeployable.deployableList=jboss/deployments/pls-test-oracle-ds.xml\nsrc/main/webapp/WEB-INF/lib/ojdbc6.jar\n
