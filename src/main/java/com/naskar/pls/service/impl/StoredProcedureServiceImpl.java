@@ -21,11 +21,14 @@ import javax.ws.rs.core.MultivaluedMap;
 
 import org.apache.log4j.Logger;
 
+import com.naskar.pls.service.SessionAttributes;
 import com.naskar.pls.service.StoredProcedureService;
 
 import oracle.jdbc.OracleTypes;
 
 public class StoredProcedureServiceImpl implements StoredProcedureService {
+	
+	private static final String PARAM_SESSION = "PLS_SESSION_";
 	
 	private interface Action<T> {
 		void call(T t) throws Exception;
@@ -41,7 +44,8 @@ public class StoredProcedureServiceImpl implements StoredProcedureService {
 	}
 	
 	@Override
-	public Map<String, Object> execute(DataSource ds, String procedureName, MultivaluedMap<String, String> values) {
+	public Map<String, Object> execute(DataSource ds, String procedureName, 
+			MultivaluedMap<String, String> values, SessionAttributes session) {
 		
 		final Map<String, Object> params = getMap(values);
 		final Map<String, Object> result = new HashMap<String, Object>();
@@ -53,7 +57,7 @@ public class StoredProcedureServiceImpl implements StoredProcedureService {
 			List<Action<CallableStatement>> actionsIn = new ArrayList<Action<CallableStatement>>();
 			List<Action<CallableStatement>> actionsOut = new ArrayList<Action<CallableStatement>>();
 
-			int size = createActions(conn, procedureName, params, result, actionsIn, actionsOut);
+			int size = createActions(conn, procedureName, params, session, result, actionsIn, actionsOut);
 			executeCallable(conn, procedureName, size, actionsIn, actionsOut);
 			
 		} catch(Exception e) {
@@ -105,7 +109,7 @@ public class StoredProcedureServiceImpl implements StoredProcedureService {
 	private int createActions(
 			Connection conn, 
 			String procedureName, 
-			final Map<String, Object> params, 
+			final Map<String, Object> params, final SessionAttributes session, 
 			final Map<String, Object> result,
 			List<Action<CallableStatement>> actionsIn, 
 			List<Action<CallableStatement>> actionsOut)
@@ -120,38 +124,59 @@ public class StoredProcedureServiceImpl implements StoredProcedureService {
 				
 				final int j = ++i;
 				
-				String name = rs.getString("COLUMN_NAME");
+				String name = rs.getString("COLUMN_NAME").toUpperCase();
 				short type = rs.getShort("COLUMN_TYPE");
 				int dataType = rs.getInt("DATA_TYPE");
 				String dataTypeName = rs.getString("TYPE_NAME");
 				
 				if(type == DatabaseMetaData.procedureColumnIn 
 						|| type == DatabaseMetaData.procedureColumnInOut) {
-					actionsIn.add((cs) -> {
-						setValue(cs, j, dataType, params.get(name));
-					});
+					
+					if(name.startsWith(PARAM_SESSION)) {
+						actionsIn.add((cs) -> {
+							setValue(cs, j, dataType, session.get(name.substring(PARAM_SESSION.length())));
+						});
+						
+					} else {
+						actionsIn.add((cs) -> {
+							setValue(cs, j, dataType, params.get(name));
+						});
+					}
 				}
 				
 				if(type == DatabaseMetaData.procedureColumnInOut 
 						|| type == DatabaseMetaData.procedureColumnOut) {
 					
-					if("REF CURSOR".equals(dataTypeName)) {
-						actionsIn.add((cs) -> {
-							cs.registerOutParameter(j, OracleTypes.CURSOR);
-						});
-						actionsOut.add((cs) -> {
-							result.put(name, getResultSet(cs, j));
-						});
-						
-					} else {
+					if(name.startsWith(PARAM_SESSION)) {
 						actionsIn.add((cs) -> {
 							cs.registerOutParameter(j, dataType);
 						});
 						actionsOut.add((cs) -> {
-							result.put(name, getValue(cs, j, dataType));
+							session.put(name.substring(PARAM_SESSION.length()), getValue(cs, j, dataType));
 						});
 						
+						
+					} else {
+					
+						if("REF CURSOR".equals(dataTypeName)) {
+							actionsIn.add((cs) -> {
+								cs.registerOutParameter(j, OracleTypes.CURSOR);
+							});
+							actionsOut.add((cs) -> {
+								result.put(name, getResultSet(cs, j));
+							});
+							
+						} else {
+							actionsIn.add((cs) -> {
+								cs.registerOutParameter(j, dataType);
+							});
+							actionsOut.add((cs) -> {
+								result.put(name, getValue(cs, j, dataType));
+							});
+							
+						}
 					}
+					
 				}
 			}
 			
@@ -204,21 +229,21 @@ public class StoredProcedureServiceImpl implements StoredProcedureService {
 		
 		switch (columnType) {
 			case Types.DECIMAL:
-				map.put(name.toUpperCase(), rs.getDouble(j));
+				map.put(name, rs.getDouble(j));
 				break;
 				
 			case Types.NUMERIC:
-				map.put(name.toUpperCase(), rs.getInt(j));
+				map.put(name, rs.getInt(j));
 				break;
 				
 			case Types.TIMESTAMP:
-				map.put(name.toUpperCase(), fromTimestamp(rs.getTimestamp(j)));
+				map.put(name, fromTimestamp(rs.getTimestamp(j)));
 				break;
 					
 			default:
 				String value = rs.getString(j); 
 				value = value != null ? value.trim() : null;
-				map.put(name.toUpperCase(), value);
+				map.put(name, value);
 				break;
 		}
 	}

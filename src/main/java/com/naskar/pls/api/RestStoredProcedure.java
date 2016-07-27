@@ -22,6 +22,7 @@ import org.apache.log4j.Logger;
 import com.naskar.pls.service.DataSourceService;
 import com.naskar.pls.service.StoredProcedureService;
 import com.naskar.pls.service.impl.DataSourceServiceImpl;
+import com.naskar.pls.service.impl.SessionAttributesImpl;
 import com.naskar.pls.service.impl.StoredProcedureServiceImpl;
 
 @Singleton
@@ -60,10 +61,11 @@ public class RestStoredProcedure {
     	try {
     		String prefix = this.dataSourceService.definePrefix(
     			request.getServletContext().getServerInfo());
-    				
+    		
     		Map<String, Object> result = 
     			storedProcedureService.execute(
-    				dataSourceService.getDataSource(prefix, ds), name, values);
+    				dataSourceService.getDataSource(prefix, ds), name, 
+    				values, new SessionAttributesImpl(request));
     		
     		return Response.ok(result)
     				.type(MediaType.APPLICATION_JSON)
