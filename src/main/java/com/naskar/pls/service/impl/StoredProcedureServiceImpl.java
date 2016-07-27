@@ -29,7 +29,7 @@ import oracle.jdbc.OracleTypes;
 
 public class StoredProcedureServiceImpl implements StoredProcedureService {
 	
-	private static final String PARAM_SESSION = "PLS_SESSION_";
+	private static final String PARAM_SESSION = "pls_session_";
 	
 	private interface Action<T> {
 		void call(T t) throws Exception;
@@ -142,14 +142,14 @@ public class StoredProcedureServiceImpl implements StoredProcedureService {
 				
 				final int j = ++i;
 				
-				String nameTmp = toUpperCaseNullable(rs.getString("COLUMN_NAME"));
+				String nameTmp = toLowerCaseNullable(rs.getString("COLUMN_NAME"));
 				short type = rs.getShort("COLUMN_TYPE");
 				int dataType = rs.getInt("DATA_TYPE");
 				String dataTypeName = rs.getString("TYPE_NAME");
 				
 				if(type == DatabaseMetaData.procedureColumnReturn) {
 					hasReturn.set(Boolean.TRUE);
-					nameTmp = "RETURN";
+					nameTmp = "return";
 				}
 				
 				String name = nameTmp;
@@ -218,10 +218,10 @@ public class StoredProcedureServiceImpl implements StoredProcedureService {
 		}
 	}
 	
-	private String toUpperCaseNullable(String v) {
+	private String toLowerCaseNullable(String v) {
 		String value = v;
 		if(value != null) {
-			value = value.toUpperCase();
+			value = value.toLowerCase();
 		}
 		return value;
 	}
@@ -359,7 +359,7 @@ public class StoredProcedureServiceImpl implements StoredProcedureService {
 	private Map<String, Object> getMap(MultivaluedMap<String, String> values) {
 		Map<String, Object> params = new HashMap<String, Object>();
 		for(String key : values.keySet()) {
-			params.put(key.toUpperCase(), values.getFirst(key));
+			params.put(key.toLowerCase(), values.getFirst(key));
 		}
 		return params;
 	}
