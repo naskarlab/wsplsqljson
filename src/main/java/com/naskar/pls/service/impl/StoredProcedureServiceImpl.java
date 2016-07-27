@@ -53,6 +53,7 @@ public class StoredProcedureServiceImpl implements StoredProcedureService {
 		Connection conn = null;
 		try {
 			conn = ds.getConnection();
+			conn.setAutoCommit(false);
 						
 			List<Action<CallableStatement>> actionsIn = new ArrayList<Action<CallableStatement>>();
 			List<Action<CallableStatement>> actionsOut = new ArrayList<Action<CallableStatement>>();
@@ -60,8 +61,18 @@ public class StoredProcedureServiceImpl implements StoredProcedureService {
 			int size = createActions(conn, procedureName, params, session, result, actionsIn, actionsOut);
 			executeCallable(conn, procedureName, size, actionsIn, actionsOut);
 			
+			conn.commit();
 		} catch(Exception e) {
 			logger.error("Erro ao executar stored procedure: " + procedureName + ":" + params, e);
+			
+			if(conn != null) {
+				try {
+					conn.rollback();
+				} catch(Exception er) {
+					logger.error("Erro ao efetuar rollback.", er);
+				}
+			}
+			
 			throw new RuntimeException(e);
 			
 		} finally {
