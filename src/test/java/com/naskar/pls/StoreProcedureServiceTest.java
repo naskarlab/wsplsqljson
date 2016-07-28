@@ -9,7 +9,7 @@ import org.junit.Test;
 
 public class StoreProcedureServiceTest {
 
-	@Test
+	// @Test
 	public void test() throws Exception {
 		DriverManager.registerDriver(new oracle.jdbc.driver.OracleDriver());
 
