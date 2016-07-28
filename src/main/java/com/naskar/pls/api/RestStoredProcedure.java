@@ -75,7 +75,7 @@ public class RestStoredProcedure {
     
     private static Throwable getRootCause(Throwable e) {
 		
-		// seguranca, caso encontre exception mal 'comportadas'
+		// seguranca, caso encontre exceptions mal 'comportadas'
 		int depth = 1000000;
 		
 		Throwable root = e;
