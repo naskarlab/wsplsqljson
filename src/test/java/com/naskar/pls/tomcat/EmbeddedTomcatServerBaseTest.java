@@ -62,6 +62,8 @@ public class EmbeddedTomcatServerBaseTest {
 		con.setRequestProperty("Accept-Language", "en-US,en;q=0.5");
 		
  		assertThat(con.getResponseCode(), equalTo(200));
+ 		
+ 		con.disconnect();
 	}
 	
 
