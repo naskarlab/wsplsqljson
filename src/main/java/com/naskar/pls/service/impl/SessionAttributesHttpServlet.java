@@ -4,11 +4,11 @@ import javax.servlet.http.HttpServletRequest;
 
 import com.naskar.pls.service.SessionAttributes;
 
-public class SessionAttributesImpl implements SessionAttributes {
+public class SessionAttributesHttpServlet implements SessionAttributes {
 	
 	private HttpServletRequest req;
 	
-	public SessionAttributesImpl(HttpServletRequest req) {
+	public SessionAttributesHttpServlet(HttpServletRequest req) {
 		this.req = req;
 	}
 	

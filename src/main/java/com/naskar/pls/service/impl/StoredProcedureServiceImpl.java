@@ -1,5 +1,10 @@
 package com.naskar.pls.service.impl;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.sql.Blob;
 import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
@@ -8,7 +13,6 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.sql.Types;
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -17,13 +21,15 @@ import java.util.List;
 import java.util.Map;
 
 import javax.sql.DataSource;
-import javax.ws.rs.core.MultivaluedMap;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
 
 import com.naskar.pls.service.Holder;
+import com.naskar.pls.service.RequestParameters;
 import com.naskar.pls.service.SessionAttributes;
 import com.naskar.pls.service.StoredProcedureService;
+import com.naskar.pls.util.FileDeleteOnCloseInputStream;
 
 import oracle.jdbc.OracleTypes;
 
@@ -38,7 +44,6 @@ public class StoredProcedureServiceImpl implements StoredProcedureService {
 	private Logger logger;
 	private SimpleDateFormat sdf;
 	
-	
 	public StoredProcedureServiceImpl() {
 		this.logger = Logger.getLogger(this.getClass());
 		this.sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
@@ -46,9 +51,8 @@ public class StoredProcedureServiceImpl implements StoredProcedureService {
 	
 	@Override
 	public Map<String, Object> execute(DataSource ds, String procedureName, 
-			MultivaluedMap<String, String> values, SessionAttributes session) {
+			RequestParameters params, SessionAttributes session) {
 		
-		final Map<String, Object> params = getMap(values);
 		final Map<String, Object> result = new HashMap<String, Object>();
 		
 		Connection conn = null;
@@ -126,7 +130,8 @@ public class StoredProcedureServiceImpl implements StoredProcedureService {
 	private int createActions(
 			Connection conn, 
 			String procedureName, 
-			final Map<String, Object> params, final SessionAttributes session, 
+			final RequestParameters params, 
+			final SessionAttributes session, 
 			final Map<String, Object> result,
 			List<Action<CallableStatement>> actionsIn, 
 			List<Action<CallableStatement>> actionsOut,
@@ -163,9 +168,19 @@ public class StoredProcedureServiceImpl implements StoredProcedureService {
 						});
 						
 					} else {
-						actionsIn.add((cs) -> {
-							setValue(cs, j, dataType, params.get(name));
-						});
+						
+						if("BLOB".equals(dataTypeName)) {
+							actionsIn.add((cs) -> {
+								setValue(cs, j, Types.BLOB, params.get(name));
+							});
+							
+						} else {
+							actionsIn.add((cs) -> {
+								setValue(cs, j, dataType, params.get(name));
+							});	
+						}
+						
+						
 					}
 				}
 				
@@ -190,6 +205,14 @@ public class StoredProcedureServiceImpl implements StoredProcedureService {
 							});
 							actionsOut.add((cs) -> {
 								result.put(name, getResultSet(cs, j));
+							});
+							
+						} else if("BLOB".equals(dataTypeName)) {
+							actionsIn.add((cs) -> {
+								cs.registerOutParameter(j, OracleTypes.BLOB);
+							});
+							actionsOut.add((cs) -> {
+								result.put(name, getValue(cs, j, Types.BLOB));
 							});
 							
 						} else {
@@ -273,7 +296,7 @@ public class StoredProcedureServiceImpl implements StoredProcedureService {
 			case Types.TIMESTAMP:
 				map.put(name, fromTimestamp(rs.getTimestamp(j)));
 				break;
-					
+				
 			default:
 				String value = rs.getString(j); 
 				value = value != null ? value.trim() : null;
@@ -282,11 +305,15 @@ public class StoredProcedureServiceImpl implements StoredProcedureService {
 		}
 	}
 
-	private Object getValue(CallableStatement cs, int j, int dataType) throws SQLException {
+	private Object getValue(CallableStatement cs, int j, int dataType) throws Exception {
 		Object o = null;
 		switch (dataType) {
 			case Types.TIMESTAMP:
 				o = fromTimestamp(cs.getTimestamp(j));
+				break;
+				
+			case Types.BLOB:
+				o = fromBlob(cs.getBlob(j));
 				break;
 	
 			default:
@@ -295,6 +322,19 @@ public class StoredProcedureServiceImpl implements StoredProcedureService {
 		}
 		return o;
 		
+	}
+	
+	private Object fromBlob(Blob b) throws Exception {
+		File file = File.createTempFile("wsplsblob", "");
+		
+		InputStream in = b.getBinaryStream();
+		FileOutputStream out = new FileOutputStream(file);
+		IOUtils.copy(in, out);
+		out.close();
+		in.close();
+		b.free();
+		
+		return new FileDeleteOnCloseInputStream(file);
 	}
 
 	private Object fromTimestamp(Timestamp t) {
@@ -308,7 +348,7 @@ public class StoredProcedureServiceImpl implements StoredProcedureService {
 	}
 
 	
-	private void setValue(CallableStatement cs, int i, int dataType, Object value) throws SQLException, ParseException {
+	private void setValue(CallableStatement cs, int i, int dataType, Object value) throws Exception {
 		if(value == null || value.toString().isEmpty()) {
 			cs.setNull(i, dataType);
 			
@@ -330,7 +370,11 @@ public class StoredProcedureServiceImpl implements StoredProcedureService {
 				case Types.TIMESTAMP:
 					cs.setTimestamp(i, new Timestamp(sdf.parse(value.toString()).getTime()));
 					break;
-		
+					
+				case Types.BLOB:
+					cs.setBlob(i, createBlob(cs, value));
+					break;
+					
 				default:
 					cs.setObject(i, value);
 					break;
@@ -338,6 +382,14 @@ public class StoredProcedureServiceImpl implements StoredProcedureService {
 		}
 	}
 	
+	private Blob createBlob(CallableStatement cs, Object value) throws Exception {
+		Blob b = cs.getConnection().createBlob();
+		OutputStream out = b.setBinaryStream(1L);
+		IOUtils.copy((InputStream)value, out);
+		out.close();
+		return b;
+	}
+
 	private String createParameters(int size) {
 		StringBuilder sb = new StringBuilder("");
 		
@@ -353,15 +405,6 @@ public class StoredProcedureServiceImpl implements StoredProcedureService {
 		}
 		
 		return sb.toString();
-	}
-
-
-	private Map<String, Object> getMap(MultivaluedMap<String, String> values) {
-		Map<String, Object> params = new HashMap<String, Object>();
-		for(String key : values.keySet()) {
-			params.put(key.toLowerCase(), values.getFirst(key));
-		}
-		return params;
 	}
 
 	private ResultSet getProcedureMetadata(String name, Connection conn) throws SQLException {

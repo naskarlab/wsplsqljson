@@ -1,34 +1,92 @@
 --------------------------------------------------------
---  Arquivo criado - Quarta-feira-Julho-27-2016   
+--  Arquivo criado - Terça-feira-Agosto-30-2016   
 --------------------------------------------------------
 --------------------------------------------------------
 --  DDL for Type TESTE_OBJECT_TYPE
 --------------------------------------------------------
 
-  CREATE OR REPLACE TYPE "TESTE_OBJECT_TYPE" is object (
+  CREATE OR REPLACE TYPE "TT"."TESTE_OBJECT_TYPE" is object (
     rid number,
     rds varchar2(256)
   );
+
+/
 --------------------------------------------------------
 --  DDL for Type TESTE_TABLE_TYPE
 --------------------------------------------------------
 
-  CREATE OR REPLACE TYPE "TESTE_TABLE_TYPE" is table of teste_object_type;
+  CREATE OR REPLACE TYPE "TT"."TESTE_TABLE_TYPE" is table of teste_object_type;
+
+/
 --------------------------------------------------------
 --  DDL for Table TB_CUSTOMER
 --------------------------------------------------------
 
-  CREATE TABLE "TB_CUSTOMER" ("ID" NUMBER, "DS" VARCHAR2(20), "DT_CT" DATE)
-REM INSERTING into TB_CUSTOMER
+  CREATE TABLE "TT"."TB_CUSTOMER" 
+   (	"ID" NUMBER, 
+	"DS" VARCHAR2(20 BYTE), 
+	"DT_CT" DATE
+   ) SEGMENT CREATION IMMEDIATE 
+  PCTFREE 10 PCTUSED 40 INITRANS 1 MAXTRANS 255 NOCOMPRESS LOGGING
+  STORAGE(INITIAL 65536 NEXT 1048576 MINEXTENTS 1 MAXEXTENTS 2147483645
+  PCTINCREASE 0 FREELISTS 1 FREELIST GROUPS 1 BUFFER_POOL DEFAULT FLASH_CACHE DEFAULT CELL_FLASH_CACHE DEFAULT)
+  TABLESPACE "SYSTEM" ;
+--------------------------------------------------------
+--  DDL for Table TB_DOC
+--------------------------------------------------------
+
+  CREATE TABLE "TT"."TB_DOC" 
+   (	"ID_DOC" NUMBER(5,0), 
+	"DS_BLOB" BLOB
+   ) SEGMENT CREATION IMMEDIATE 
+  PCTFREE 10 PCTUSED 40 INITRANS 1 MAXTRANS 255 NOCOMPRESS LOGGING
+  STORAGE(INITIAL 65536 NEXT 1048576 MINEXTENTS 1 MAXEXTENTS 2147483645
+  PCTINCREASE 0 FREELISTS 1 FREELIST GROUPS 1 BUFFER_POOL DEFAULT FLASH_CACHE DEFAULT CELL_FLASH_CACHE DEFAULT)
+  TABLESPACE "SYSTEM" 
+ LOB ("DS_BLOB") STORE AS BASICFILE (
+  TABLESPACE "SYSTEM" ENABLE STORAGE IN ROW CHUNK 8192 RETENTION 
+  NOCACHE LOGGING 
+  STORAGE(INITIAL 65536 NEXT 1048576 MINEXTENTS 1 MAXEXTENTS 2147483645
+  PCTINCREASE 0 FREELISTS 1 FREELIST GROUPS 1 BUFFER_POOL DEFAULT FLASH_CACHE DEFAULT CELL_FLASH_CACHE DEFAULT)) ;
+REM INSERTING into TT.TB_CUSTOMER
 SET DEFINE OFF;
-Insert into TB_CUSTOMER (ID,DS,DT_CT) values ('1','1111',to_date('26/05/16','DD/MM/RR'));
-Insert into TB_CUSTOMER (ID,DS,DT_CT) values ('2','2222',to_date('26/05/16','DD/MM/RR'));
-Insert into TB_CUSTOMER (ID,DS,DT_CT) values ('3','333',to_date('26/05/16','DD/MM/RR'));
+Insert into TT.TB_CUSTOMER (ID,DS,DT_CT) values ('1','1111',to_date('26/05/16','DD/MM/RR'));
+Insert into TT.TB_CUSTOMER (ID,DS,DT_CT) values ('2','2222',to_date('26/05/16','DD/MM/RR'));
+Insert into TT.TB_CUSTOMER (ID,DS,DT_CT) values ('3','333',to_date('26/05/16','DD/MM/RR'));
+REM INSERTING into TT.TB_DOC
+SET DEFINE OFF;
+Insert into TT.TB_DOC (ID_DOC) values ('100');
+--------------------------------------------------------
+--  Constraints for Table TB_DOC
+--------------------------------------------------------
+
+  ALTER TABLE "TT"."TB_DOC" MODIFY ("DS_BLOB" NOT NULL ENABLE);
+  ALTER TABLE "TT"."TB_DOC" MODIFY ("ID_DOC" NOT NULL ENABLE);
+--------------------------------------------------------
+--  DDL for Package PKG_BLOB
+--------------------------------------------------------
+
+  CREATE OR REPLACE PACKAGE "TT"."PKG_BLOB" as 
+
+  procedure prc_upload_blob(
+    p_id_doc in number,
+    p_file1 in blob,
+    p_size_file1 out number
+  );
+  
+  procedure prc_download_blob(
+    p_id_doc in number,
+    p_file1 out blob
+  );
+
+end pkg_blob;
+
+/
 --------------------------------------------------------
 --  DDL for Package PKG_TESTE
 --------------------------------------------------------
 
-  CREATE OR REPLACE PACKAGE "PKG_TESTE" as 
+  CREATE OR REPLACE PACKAGE "TT"."PKG_TESTE" as 
 
   procedure prc_teste(
     p_id in number,
@@ -65,13 +123,44 @@ Insert into TB_CUSTOMER (ID,DS,DT_CT) values ('3','333',to_date('26/05/16','DD/M
   function fnc_teste_refcursor(
     p_id number
   ) return sys_refcursor;
-
+  
 end pkg_teste;
+
+/
+--------------------------------------------------------
+--  DDL for Package Body PKG_BLOB
+--------------------------------------------------------
+
+  CREATE OR REPLACE PACKAGE BODY "TT"."PKG_BLOB" as
+
+  procedure prc_upload_blob(
+    p_id_doc in number,
+    p_file1 in blob,
+    p_size_file1 out number
+  ) as
+  begin
+    p_size_file1 := dbms_lob.getlength(p_file1);
+  end prc_upload_blob;
+  
+  procedure prc_download_blob(
+    p_id_doc in number,
+    p_file1 out blob
+  ) as
+  begin
+    select ds_blob 
+    into p_file1 
+    from tb_doc 
+    where id_doc = p_id_doc;
+  end prc_download_blob;
+
+end pkg_blob;
+
+/
 --------------------------------------------------------
 --  DDL for Package Body PKG_TESTE
 --------------------------------------------------------
 
-  CREATE OR REPLACE PACKAGE BODY "PKG_TESTE" as
+  CREATE OR REPLACE PACKAGE BODY "TT"."PKG_TESTE" as
 
   procedure prc_teste(
     p_id in number,
@@ -153,3 +242,5 @@ end pkg_teste;
   end;
   
 end pkg_teste;
+
+/

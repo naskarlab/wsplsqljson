@@ -1,5 +1,9 @@
 # wspls - PL/SQL over HTTP/JSON
-Call Oracle stored procedures or functions over HTTP as webservice, returning JSON of the IN/OUT parameters or sys_refcursor. Use HTTP Session parameters within your Oracle packages plsql.
+Call Oracle stored procedures or functions over HTTP as webservice, returning JSON of the IN/OUT parameters. 
+
+- Number, date, timestamp, varchar2, sys_refcursor and BLOB are supporteds.
+- Use HTTP Session parameters within your Oracle packages plsql. 
+- For upload of blobs, to use MultipartFormData. 
 
 Simple web application java: wars/wspls.war for:
 	
