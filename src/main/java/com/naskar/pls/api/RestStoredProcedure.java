@@ -30,6 +30,7 @@ import com.naskar.pls.service.DataSourceService;
 import com.naskar.pls.service.StoredProcedureService;
 import com.naskar.pls.service.impl.DataSourceServiceImpl;
 import com.naskar.pls.service.impl.RequestParametersFormDataMultiPart;
+import com.naskar.pls.service.impl.RequestParametersMap;
 import com.naskar.pls.service.impl.RequestParametersMultivaluedMap;
 import com.naskar.pls.service.impl.SessionAttributesHttpServlet;
 import com.naskar.pls.service.impl.StoredProcedureServiceImpl;
@@ -113,6 +114,39 @@ public class RestStoredProcedure {
     		
     	}
     }
+	
+	@POST
+    @Path("/{ds}/{name}")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response prc(
+		@Context HttpServletRequest request,
+		@PathParam("ds") String ds,
+		@PathParam("name") String name, 
+		Map<String, Object> values) {
+		
+    	try {
+    		String prefix = this.dataSourceService.definePrefix(
+    			request.getServletContext().getServerInfo());
+    		
+    		Map<String, Object> result = 
+    			storedProcedureService.execute(
+    				dataSourceService.getDataSource(prefix, ds), name, 
+    				new RequestParametersMap(values), 
+    				new SessionAttributesHttpServlet(request));
+    		
+    		return createResponse(result);
+	    	
+    	} catch(Throwable t) {
+    		
+    		return Response.serverError()
+    			.entity(error("Erro ao executar: " + name, t))
+    			.type(MediaType.TEXT_PLAIN)
+    			.build();
+    		
+    	}
+    }
+
 
 	private Response createResponse(Map<String, Object> result) {
 		
