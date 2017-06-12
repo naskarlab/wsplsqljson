@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <datasources>
-	<datasource jta="false" jndi-name="java:jboss/datasources/pls/test" pool-name="pls/test" enabled="true" use-ccm="false">
+	<datasource jta="false" jndi-name="java:jboss/datasources/pls/test" pool-name="pls/test" enabled="true" use-ccm="false" use-java-context="true">
 		<connection-url>jdbc:oracle:thin:@192.168.32.137:1521:XE</connection-url>
 		<driver-class>oracle.jdbc.OracleDriver</driver-class>
 		<driver>ojdbc6.jar</driver>

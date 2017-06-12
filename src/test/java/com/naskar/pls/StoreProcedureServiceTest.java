@@ -15,7 +15,11 @@ import com.naskar.pls.tomcat.EmbeddedTomcatServerBaseTest;
 
 import net.minidev.json.JSONArray;
 
-public class StoreProcedureServiceTest extends EmbeddedTomcatServerBaseTest {
+public class StoreProcedureServiceTest /*extends EmbeddedTomcatServerBaseTest*/ {
+	
+	public static String getServerUrl() {
+    	return "http://localhost:8080/wspls";
+    }
 
 	@Test
 	public void testSucessPkgTestPrcTeste() throws Exception {
